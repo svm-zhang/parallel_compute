@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <thread>
+#include <cmath>
 
 #include "CycleTimer.h"
 
@@ -20,7 +21,8 @@ extern void mandelbrotSerial(
     int width, int height,
     int startRow, int numRows,
     int maxIterations,
-    int output[]);
+    int output[]
+);
 
 
 //
@@ -35,7 +37,21 @@ void workerThreadStart(WorkerArgs * const args) {
     // program that uses two threads, thread 0 could compute the top
     // half of the image and thread 1 could compute the bottom half.
 
-    printf("Hello world from thread %d\n", args->threadId);
+    double startTime = CycleTimer::currentSeconds();
+    int numRows = std::floor(args->height / args->numThreads) + 1;
+    int startRow = args->threadId * numRows;
+    if (startRow + numRows > args->height) {
+      numRows = args->height - startRow;
+    }
+    // printf("startRow=%d\tnumRows=%d\ttotal=%d\n", startRow, numRows, startRow+numRows);
+    mandelbrotSerial(
+        args->x0, args->y0, args->x1, args->y1,
+        args->width, args->height, startRow, numRows,
+        args->maxIterations, args->output
+    );
+    double endTime = CycleTimer::currentSeconds();
+    printf("[Thread %d]:\t\t[%.3f] ms\n", args->threadId, (endTime - startTime) * 1000);
+
 }
 
 //
