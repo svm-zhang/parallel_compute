@@ -51,6 +51,21 @@ void workerThreadStart(WorkerArgs * const args) {
     );
     double endTime = CycleTimer::currentSeconds();
     printf("[Thread %d]:\t\t[%.3f] ms\n", args->threadId, (endTime - startTime) * 1000);
+}
+
+
+void workerFasterThreadStart(WorkerArgs * const args) {
+
+    double startTime = CycleTimer::currentSeconds();
+    for (int row = args->threadId; row < args->height; row += args->numThreads) {
+        mandelbrotSerial(
+            args->x0, args->y0, args->x1, args->y1,
+            args->width, args->height, row, 1,
+            args->maxIterations, args->output
+        );
+    }
+    double endTime = CycleTimer::currentSeconds();
+    printf("[Thread %d]:\t\t[%.3f] ms\n", args->threadId, (endTime - startTime) * 1000);
 
 }
 
@@ -99,10 +114,10 @@ void mandelbrotThread(
     // are created and the main application thread is used as a worker
     // as well.
     for (int i=1; i<numThreads; i++) {
-        workers[i] = std::thread(workerThreadStart, &args[i]);
+        workers[i] = std::thread(workerFasterThreadStart, &args[i]);
     }
     
-    workerThreadStart(&args[0]);
+    workerFasterThreadStart(&args[0]);
 
     // join worker threads
     for (int i=1; i<numThreads; i++) {
