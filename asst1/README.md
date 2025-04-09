@@ -1,9 +1,5 @@
 # Assignment 1: Performance Analysis on a Quad-Core CPU #
 
-**Due Mon Oct 7, 11:59pm**
-
-**100 points total + 6 points extra credit**
-
 ## Overview ##
 
 This assignment is intended to help you develop an understanding of the two primary forms of parallel execution present in a modern multi-core CPU:
