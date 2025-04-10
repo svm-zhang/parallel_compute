@@ -63,8 +63,8 @@ int main(int argc, char * argv[]) {
   clampedExpSerial(values, exponents, gold, N);
   clampedExpVector(values, exponents, output, N);
 
-  //absSerial(values, gold, N);
-  //absVector(values, output, N);
+  // absSerial(values, gold, N);
+  // absVector(values, output, N);
 
   printf("\e[1;31mCLAMPED EXPONENT\e[0m (required) \n");
   bool clampedCorrect = verifyResult(values, exponents, output, gold, N);
@@ -86,18 +86,18 @@ int main(int argc, char * argv[]) {
   //   bool sumCorrect = abs(sumGold - sumOutput) < epsilon * 2;
   //   if (!sumCorrect) {
   //     printf("Expected %f, got %f\n.", sumGold, sumOutput);
-  //     printf("@@@ Failed!!!\n");
+  //    printf("@@@ Failed!!!\n");
   //   } else {
   //     printf("Passed!!!\n");
   //   }
   // } else {
   //   printf("Must have N %% VECTOR_WIDTH == 0 for this problem (VECTOR_WIDTH is %d)\n", VECTOR_WIDTH);
   // }
-  //
-  // delete [] values;
-  // delete [] exponents;
-  // delete [] output;
-  // delete [] gold;
+
+  delete [] values;
+  delete [] exponents;
+  delete [] output;
+  delete [] gold;
 
   return 0;
 }
@@ -249,6 +249,68 @@ void clampedExpVector(float* values, int* exponents, float* output, int N) {
   // Your solution should work for any value of
   // N and VECTOR_WIDTH, not just when VECTOR_WIDTH divides N
   //
+  __cs149_vec_float x;
+  __cs149_vec_int y;  // exponent
+  __cs149_vec_int count;
+  __cs149_vec_float result;
+  __cs149_vec_int zero = _cs149_vset_int(0);
+  __cs149_vec_int one = _cs149_vset_int(1);
+  __cs149_vec_float clamp_val = _cs149_vset_float(9.999999f);
+  __cs149_mask maskAll;
+  __cs149_mask maskExpIsZero, maskExpNonZero;
+  __cs149_mask maskNeedClamp;
+  for (int i = 0; i < N; i+=VECTOR_WIDTH) {
+
+    // create a mask with all element set to true
+    int first = VECTOR_WIDTH;
+    if (i + VECTOR_WIDTH > N) {
+      first = N - i;
+    }
+    // printf("i=%d\tfirst=%d\n", i, first);
+    maskAll = _cs149_init_ones(first);
+
+    // use the maskAll mask to load values to x
+    _cs149_vload_float(x, values+i, maskAll);
+    // same as above but for y (exponent)
+    _cs149_vload_int(y, exponents+i, maskAll);
+
+    // if (y == 0)
+    _cs149_veq_int(maskExpIsZero, y, zero, maskAll);
+
+    // output[i] = 1.f;
+    // set result to 1.0 if the exponent is zero
+    _cs149_vset_float(result, 1.0f, maskExpIsZero);
+
+    // else y != 0
+    maskExpNonZero = _cs149_mask_not(maskExpIsZero);
+    // _cs149_vgt_int(maskExpNonZero, y, zero, maskExpNonZero);
+    // int result = x;
+    _cs149_vmove_float(result, x, maskExpNonZero);
+    // int count = y - 1;
+    _cs149_vsub_int(count, y, one, maskExpNonZero);
+    // below 2 lines are crucial 
+    // _cs149_vgt_int(maskExpNonZero, count, zero, maskExpNonZero);
+    _cs149_veq_int(maskExpIsZero, count, zero, maskExpNonZero);
+    maskExpNonZero = _cs149_mask_not(maskExpIsZero);
+    // while (count > 0) {
+    //   result *= x;
+    //   count--;
+    // }
+    while (_cs149_cntbits(maskExpNonZero) > 0) {
+      _cs149_vmult_float(result, result, x, maskExpNonZero);
+      _cs149_vsub_int(count, count, one, maskExpNonZero);
+      // _cs149_vgt_int(maskExpNonZero, count, zero, maskExpNonZero);
+      _cs149_veq_int(maskExpIsZero, count, zero, maskExpNonZero);
+      maskExpNonZero = _cs149_mask_not(maskExpIsZero);
+    }
+
+    // result > 9.999999, do clamp
+    _cs149_vgt_float(maskNeedClamp, result, clamp_val, maskAll);
+    _cs149_vset_float(result, 9.999999f, maskNeedClamp);
+
+    // store result vector to output
+    _cs149_vstore_float(output+i, result, maskAll);
+  }
   
 }
 
@@ -271,10 +333,5 @@ float arraySumVector(float* values, int N) {
   // CS149 STUDENTS TODO: Implement your vectorized version of arraySumSerial here
   //
   
-  for (int i=0; i<N; i+=VECTOR_WIDTH) {
-
-  }
-
-  return 0.0;
 }
 
