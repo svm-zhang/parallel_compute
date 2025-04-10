@@ -298,7 +298,6 @@ void clampedExpVector(float* values, int* exponents, float* output, int N) {
       _cs149_vsub_int(count, count, one, maskExpNonZero);
       _cs149_vgt_int(maskExpNonZero, count, zero, maskExpNonZero);
     }
-    // printf("checkpoint\n");
 
     // result > 9.999999, do clamp
     _cs149_vgt_float(maskNeedClamp, result, clamp_val, maskAll);
@@ -329,26 +328,5 @@ float arraySumVector(float* values, int N) {
   // CS149 STUDENTS TODO: Implement your vectorized version of arraySumSerial here
   //
   
-  __cs149_vec_float x;
-  __cs149_vec_float result = _cs149_vset_float(0.f);
-  __cs149_mask maskAll;
-
-  for (int i=0; i<N; i+=VECTOR_WIDTH) {
-    maskAll = _cs149_init_ones();
-
-    _cs149_vload_float(x, values+i, maskAll);
-
-    _cs149_vadd_float(result, result, x, maskAll);
-
-  }
-
-  for (int i = 0; i < log2(VECTOR_WIDTH)-1; i++) {
-    _cs149_hadd_float(result, result);
-    _cs149_interleave_float(result, result);
-
-  }
-  _cs149_hadd_float(result, result);
-
-  return result.value[0];
 }
 
