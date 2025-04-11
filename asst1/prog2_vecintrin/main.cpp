@@ -60,6 +60,9 @@ int main(int argc, char * argv[]) {
   float* gold = new float[N+VECTOR_WIDTH];
   initValue(values, exponents, output, gold, N);
 
+  // Added to readjusts the exponent distribution
+  std::sort(exponents, exponents + N + VECTOR_WIDTH);
+
   clampedExpSerial(values, exponents, gold, N);
   clampedExpVector(values, exponents, output, N);
 
