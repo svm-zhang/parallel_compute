@@ -184,6 +184,75 @@ You can find the final implementation in [commit 1361bd3](https://github.com/svm
 utilization. You can do this by changing the `#define VECTOR_WIDTH` value in `CS149intrin.h`. 
 Does the vector utilization increase, decrease or stay the same as `VECTOR_WIDTH` changes? Why?*
 
+The vector utilization decreases as the `VECTOR_WIDTH` increases, as illustrated
+in the four images below.
+
+`VECTOR_WIDTH=2`
+![Vector utilization for VW=2](vw2.png )
+
+`VECTOR_WIDTH=4`
+![Vector utilization for VW=4](vw4.png )
+
+`VECTOR_WIDTH=8`
+![Vector utilization for VW=8](vw8.png )
+
+`VECTOR_WIDTH=16`
+![Vector utilization for VW=16](vw16.png )
+
+This observation can be explained using an example with a skewed distribution of
+the exponent array:
+
+```text
+exponets = [9, 1, 1, 1, 0, 0, 0, 10]
+
+# VECTOR_WIDTH=4
+i = 0:
+    y = [9, 1, 1, 1]    # y is loaded from input exponent array 
+i = 1:
+    y = [0, 0, 0, 10]
+```
+
+Because one or couple of lanes have a large exponent, they remain active longer
+while others lanes become inactive. This results in under-utilization of the
+vector space.
+
+If the distribution of exponent values is known beforehand, 
+the utilization rate might be improved by reordering the exponent array--for
+instance, by sorting it. Sorting readjusts the distribution so that the
+exponents in each vector are more uniform.
+
+```cpp
+std::sort(exponents, exponents+N+VECTOR_WIDTH)
+```
+
+`VECTOR_WIDTH=2` after sorting
+![Vector utilization for VW=2 with pre-sorted exponent array](vw2_presort.png)
+
+`VECTOR_WIDTH=4` after sorting
+![Vector utilization for VW=4 with pre-sorted exponent array](vw4_presort.png)
+
+`VECTOR_WIDTH=8` after sorting
+![Vector utilization for VW=8 with pre-sorted exponent array](vw8_presort.png)
+
+`VECTOR_WIDTH=16` after sorting
+![Vector utilization for VW=16 with pre-sorted exponent array](vw16_presort.png)
+
+With this change, not only does the utilization rate remain stable as the
+`VECTOR_WIDTH` increases, but it is also significantly improved across 
+all values of `VECTOR_WIDTH`.
+
+__I also noticed one interesting aspect:__ the total number of vector lanes processed
+is significantly lower compared to the implementation without pre-sorting.
+One possible explanation is that when sorting makes each vector more uniform.
+As a result, the exponent values in each vector during a given iteration are
+more likely to fall entirely into either
+the `if` or the `else` branch, rather than splitting between the two.
+This uniformity reduces the
+overall count added to the total number of processed vector lanes. In fact, if
+you examine
+the total number of vector instructions executed, the pre-sorting implementation
+incurs significantly fewer vector instructions, which further supports this explanation.
+
 ## Q2-3
 
 *Implement a vectorized version of `arraySumSerial` in `arraySumVector`.
