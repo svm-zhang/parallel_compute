@@ -12,6 +12,11 @@ performance of parallel programs (a challenging, but important, skill you will
 use throughout this class). This assignment involves only a small amount of
 programming, but a lot of analysis!
 
+## Write-up
+
+- [program 1](./prog1_mandelbrot_threads/README.md)
+- [program 2](./prog2_vecintrin/README.md)
+
 
 ## Program 3: Parallel Fractal Generation Using ISPC (20 points) ##
 
