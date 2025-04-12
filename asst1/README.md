@@ -5,18 +5,21 @@
 This assignment is intended to help you develop an understanding of the two primary forms of parallel execution present in a modern multi-core CPU:
 
 1. SIMD execution within a single processing core
-2. Parallel execution using multiple cores (You'll see effects of Intel Hyper-threading as well.)
+2. Parallel execution using multiple cores
 
 You will also gain experience measuring and reasoning about the
 performance of parallel programs (a challenging, but important, skill you will
 use throughout this class). This assignment involves only a small amount of
 programming, but a lot of analysis!
 
+__All write-ups are currently based on results obtained from running on
+Apple M1 chip.__
+
 ## Write-up
 
 - [program 1](./prog1_mandelbrot_threads/README.md)
 - [program 2](./prog2_vecintrin/README.md)
-- program 3
+- [program 3](./prog3_mandelbrot_ispc/README.md)
 
 
 ## What About ARM-Based Macs? ##
