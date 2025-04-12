@@ -263,11 +263,11 @@ or even `(N / VECTOR_WIDTH + log2(VECTOR_WIDTH))`.
 You may find the `hadd` and `interleave` operations useful.*
 
 IMO, the primary point of this question comes down to how to implement 
-`reduce sum`. The `hadd` and `interleave` intrinsics provided enables a runtime
-of O(N/VECTOR_WIDTH + log2(VECTOR_WIDTH)) (the second term is the `reduce sum`
-). I actually cannot think of an implementation of `reduce sum` in linear
-time with the given set of intrinsics. The naive approach defeats the purpose
-of using vectorized intrinsics as illustrated below:
+`reduce sum`. The `hadd` and `interleave` intrinsics provided enable a runtime
+of O(N/VECTOR_WIDTH + log2(VECTOR_WIDTH)) (the second term corresponds to the
+`reduce sum`). I cannot think of an implementation of `reduce sum` that runs in
+linear time using the given set of intrinsics. A naive approach, such as the
+one below, defeats the purpose of using vectorized intrinsics:
 
 ```cpp
 float sum = 0.0f;
