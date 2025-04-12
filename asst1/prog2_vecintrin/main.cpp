@@ -81,21 +81,21 @@ int main(int argc, char * argv[]) {
     printf("Passed!!!\n");
   }
 
-  // printf("\n\e[1;31mARRAY SUM\e[0m (bonus) \n");
-  // if (N % VECTOR_WIDTH == 0) {
-  //   float sumGold = arraySumSerial(values, N);
-  //   float sumOutput = arraySumVector(values, N);
-  //   float epsilon = 0.1;
-  //   bool sumCorrect = abs(sumGold - sumOutput) < epsilon * 2;
-  //   if (!sumCorrect) {
-  //     printf("Expected %f, got %f\n.", sumGold, sumOutput);
-  //    printf("@@@ Failed!!!\n");
-  //   } else {
-  //     printf("Passed!!!\n");
-  //   }
-  // } else {
-  //   printf("Must have N %% VECTOR_WIDTH == 0 for this problem (VECTOR_WIDTH is %d)\n", VECTOR_WIDTH);
-  // }
+  printf("\n\e[1;31mARRAY SUM\e[0m (bonus) \n");
+  if (N % VECTOR_WIDTH == 0) {
+    float sumGold = arraySumSerial(values, N);
+    float sumOutput = arraySumVector(values, N);
+    float epsilon = 0.1;
+    bool sumCorrect = abs(sumGold - sumOutput) < epsilon * 2;
+    if (!sumCorrect) {
+      printf("Expected %f, got %f\n.", sumGold, sumOutput);
+     printf("@@@ Failed!!!\n");
+    } else {
+      printf("Passed!!!\n");
+    }
+  } else {
+    printf("Must have N %% VECTOR_WIDTH == 0 for this problem (VECTOR_WIDTH is %d)\n", VECTOR_WIDTH);
+  }
 
   delete [] values;
   delete [] exponents;
@@ -331,5 +331,26 @@ float arraySumVector(float* values, int N) {
   // CS149 STUDENTS TODO: Implement your vectorized version of arraySumSerial here
   //
   
+  __cs149_vec_float x;
+  __cs149_vec_float result = _cs149_vset_float(0.f);
+  __cs149_mask maskAll;
+
+  for (int i=0; i<N; i+=VECTOR_WIDTH) {
+    maskAll = _cs149_init_ones();
+
+    _cs149_vload_float(x, values+i, maskAll);
+
+    _cs149_vadd_float(result, result, x, maskAll);
+
+  }
+
+  for (int i = 0; i < log2(VECTOR_WIDTH)-1; i++) {
+    _cs149_hadd_float(result, result);
+    _cs149_interleave_float(result, result);
+
+  }
+  _cs149_hadd_float(result, result);
+
+  return result.value[0];
 }
 
