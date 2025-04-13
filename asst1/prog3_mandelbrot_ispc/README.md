@@ -149,7 +149,7 @@ This ensures that ISPC generates code optimized for 4-wide 32-bit integer
 operations.
 
 The maximum expected speedup with 4-wide vector instruction is 4x compared to
-SISD. However, the observed runtime speedups are 3.22x and 2.54x for View 1
+SISD. However, the observed runtime speedups are 1.92x and 1.60x for View 1
 and 2, respectively, as shown in the images below.
 
 View1
