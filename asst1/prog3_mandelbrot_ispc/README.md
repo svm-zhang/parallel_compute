@@ -136,7 +136,37 @@ For the purposes of this assignment, you can assume that there are about
 as many 8-wide vector execution units as there are scalar execution units
 for floating point math.*
 
+#### Apple M1 chip
 
+Since the M1 chip supports 128-bit wide vector instructions. I configure
+the ISPC compiler accordingly:
+
+```make
+ISPCFLAGS=-O3 --target=neon-i32x4 --arch=aarch64 --opt=disable-fma --pic
+```
+
+This ensures that ISPC generates code optimized for 4-wide 32-bit integer
+operations.
+
+The maximum expected speedup with 4-wide vector instruction is 4x compared to
+SISD. However, the observed runtime speedups are 3.22x and 2.54x for View 1
+and 2, respectively, as shown in the images below.
+
+View1
+
+![ISPC View1](./ispc_view1.png)
+
+View2
+
+![ISPC View2](./ispc_view2.png)
+
+Similar to the observations from the program2 assignment, I believe the
+less-than-expect speedup is a result of workload imbalance. Although
+4 pixels are computed simultaneously per clock cycle, some pixels require
+longer processing time than others. This can be observed in regions
+where there is a transition between white and black pixels. Consequently,
+View2 exhibits worse speedup than View1 because these transitory regions
+are more prevalent in View2.
 
 ### Program 3, Part 2: ISPC Tasks (10 of 20 points) ###
 
