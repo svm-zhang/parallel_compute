@@ -75,6 +75,8 @@ int main(int argc, char** argv) {
     const unsigned int height = 800;
     const int maxIterations = 256;
 
+    int trial = 10;
+
     float x0 = -2;
     float x1 = 1;
     float y0 = -1;
@@ -132,7 +134,7 @@ int main(int argc, char** argv) {
     // runs for robust timing.
     //
     double minSerial = 1e30;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < trial; ++i) {
         double startTime = CycleTimer::currentSeconds();
         mandelbrotSerial(x0, y0, x1, y1, width, height, 0, height, maxIterations, output_serial);
         double endTime = CycleTimer::currentSeconds();
@@ -150,7 +152,7 @@ int main(int argc, char** argv) {
     // Compute the image using the ispc implementation
     //
     double minISPC = 1e30;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < trial; ++i) {
         double startTime = CycleTimer::currentSeconds();
         mandelbrot_ispc(x0, y0, x1, y1, width, height, maxIterations, output_ispc);
         double endTime = CycleTimer::currentSeconds();
@@ -181,7 +183,7 @@ int main(int argc, char** argv) {
         //
         // Tasking version of the ISPC code
         //
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < trial; ++i) {
             double startTime = CycleTimer::currentSeconds();
             mandelbrot_ispc_withtasks(x0, y0, x1, y1, width, height, maxIterations, output_ispc_tasks);
             double endTime = CycleTimer::currentSeconds();
