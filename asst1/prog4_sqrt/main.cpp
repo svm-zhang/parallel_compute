@@ -22,6 +22,7 @@ int main() {
 
     const unsigned int N = 20 * 1000 * 1000;
     const float initialGuess = 1.0f;
+    int trial = 10;
 
     float* values = new float[N];
     float* output = new float[N];
@@ -49,7 +50,7 @@ int main() {
     // minimum time.
     //
     double minSerial = 1e30;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < trial; ++i) {
         double startTime = CycleTimer::currentSeconds();
         sqrtSerial(N, initialGuess, values, output);
         double endTime = CycleTimer::currentSeconds();
@@ -65,7 +66,7 @@ int main() {
     // time of three runs.
     //
     double minISPC = 1e30;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < trial; ++i) {
         double startTime = CycleTimer::currentSeconds();
         sqrt_ispc(N, initialGuess, values, output);
         double endTime = CycleTimer::currentSeconds();
@@ -84,7 +85,7 @@ int main() {
     // Tasking version of the ISPC code
     //
     double minTaskISPC = 1e30;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < trial; ++i) {
         double startTime = CycleTimer::currentSeconds();
         sqrt_ispc_withtasks(N, initialGuess, values, output);
         double endTime = CycleTimer::currentSeconds();
