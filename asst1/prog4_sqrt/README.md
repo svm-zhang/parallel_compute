@@ -13,6 +13,23 @@ Note: This problem is a review to double-check your understanding, as it covers 
 
 ![Convergence of sqrt](../handout-images/sqrt_graph.jpg "Convergence of sqrt on the range 0-3 with starting guess 1.0. Note that iterations until convergence is immediate for an input value of 1 and increases as the input value goes toward 0 or 3 (highest value is for input of 3).")
 
+## Hardware
+
+- Ryzen 7950x CPU
+    - 4.5GHz
+    - 16 cores, 2 hyperthreads per core
+    - Supports 256-bit wide AVX2 vector instructions.
+- Apple M1 chip: Su
+    - 4 (performance) + 4 (efficiency) cores, no hyperthreading
+
+I update the MakeFile to reconfigure ISPC compiler on Apple machine:
+
+```make
+ISPCFLAGS=-O3 --target=neon-i32x4 --arch=aarch64 --pic
+```
+
+## Note
+All speedups are measured across 10 trials.
 
 ## Q4-1
 Build and run `sqrt`. Report the ISPC implementation speedup for 
@@ -20,10 +37,21 @@ single CPU core (no tasks) and when using all cores (with tasks). What
 is the speedup due to SIMD parallelization? What is the speedup due to 
 multi-core parallelization?
 
+Speedups from serial, SIMD, and multi-core implementations on Ryzen 7950x:
+
+![Q4_1 speedup Ryzen](./Q4_1.png)
+
+Speedups from serial, SIMD, and multi-core implementations on Apple machine:
+
+
 ## Q4-2
 Modify the contents of the array values to improve the relative speedup 
 of the ISPC implementations. Construct a specifc input that __maximizes speedup over the sequential version of the code__ and report the resulting speedup achieved (for both the with- and without-tasks ISPC implementations). Does your modification improve SIMD speedup?
 Does it improve multi-core speedup (i.e., the benefit of moving from ISPC without-tasks to ISPC with tasks)? Please explain why.
+
+Speedups from serial, SIMD, and multi-core implementations on Ryzen 7950x:
+
+![Q4_2 speedup Ryzen](./Q4_2.png)
 
 ## Q4-3
 Construct a specific input for `sqrt` that __minimizes speedup for ISPC
@@ -32,6 +60,11 @@ describe why you chose it, and report the resulting relative performance of
 the ISPC implementations. What is the reason for the loss in efficiency? 
 __(keep in mind we are using the `--target=avx2` option for ISPC,
 which generates 8-wide SIMD instructions)__. 
+
+Speedups from serial, SIMD, and multi-core implementations on Ryzen 7950x:
+
+![Q4_3 speedup Ryzen](./Q4_3.png)
+
 
 ## Q4-4
 _Extra Credit: (up to 2 points)_ Write your own version of the `sqrt` 
