@@ -21,16 +21,31 @@ Apple M1 chip.__
 - [program 2](./prog2_vecintrin/README.md)
 - [program 3](./prog3_mandelbrot_ispc/README.md)
 - [program 4](./prog4_sqrt/README.md)
+- [program 5](./prog5_saxpy/README.md)
 
 
 ## What About ARM-Based Macs? ##
 
-For those with access to a new Apple ARM-based laptop, try changing the ISPC compilation target to `neon-i32x8` and the compilation arch to `aarch64` in Programs 3, 4, and 5. The other programs only use GCC and should produce the correct target. Produce a report of performance of the various programs on a new Apple ARM-based laptop. The staff is curious about what you will find.  What speedups are you observing from SIMD execution? Those without access to a modern Macbook could try to use ARM-based servers that are available on a cloud provider like AWS, although it has not been tested by the staff. Make sure that you reset the ISPC compilation target to `avx2-i32x8` and the compilation arch to `x86-64` before you submit the assignment because we will be testing your solutions on the myth machines!
+For those with access to a new Apple ARM-based laptop, try changing the ISPC
+compilation target to `neon-i32x8` and the compilation arch to `aarch64` in
+Programs 3, 4, and 5. The other programs only use GCC and should produce the
+correct target. Produce a report of performance of the various programs on a
+new Apple ARM-based laptop. The staff is curious about what you will find.
+What speedups are you observing from SIMD execution? Those without access to
+a modern Macbook could try to use ARM-based servers that are available on a
+cloud provider like AWS, although it has not been tested by the staff. Make
+sure that you reset the ISPC compilation target to `avx2-i32x8` and the
+compilation arch to `x86-64` before you submit the assignment because we will
+be testing your solutions on the myth machines!
 
 ## For the Curious (highly recommended) ##
 
-Want to know about ISPC and how it was created? One of the two creators of ISPC, Matt Pharr, wrote an __amazing blog post__ on the history of its development called [The story of ispc](https://pharr.org/matt/blog/2018/04/30/ispc-all).  It really touches on many issues of parallel system design -- in particular the value of limited scope vs general programming languages.  IMHO it's a must read for CS149 students!
-
+Want to know about ISPC and how it was created? One of the two creators of ISPC,
+Matt Pharr, wrote an __amazing blog post__ on the history of its development
+called [The story of ispc](https://pharr.org/matt/blog/2018/04/30/ispc-all).
+It really touches on many issues of parallel system design -- in particular the
+value of limited scope vs general programming languages.
+IMHO it's a must read for CS149 students!
 
 ## Resources and Notes ##
 
