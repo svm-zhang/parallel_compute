@@ -125,13 +125,11 @@ This initialization defeats the benefits of the
 SIMD implementation entirely, as it introduces extreme workload imbalance
 across the lanes.
 
-- Speedups from serial, SIMD, and multi-core (32 tasks) implementations
-on Ryzen 7950x:
+- Speedups from serial and SIMD implementations on Ryzen 7950x:
 
     ![Q4_3 speedup Ryzen](./Q4_3_7950x.png)
 
-- Speedups from serial, SIMD, and multi-core (8 tasks) implementations
-on Apple M1 machine:
+- Speedups from serial and SIMD implementations on Apple M1 machine:
 
     ![Q4_3 speedup m1](./Q4_3_m1.png)
 
