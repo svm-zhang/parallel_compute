@@ -18,52 +18,122 @@ Note: This problem is a review to double-check your understanding, as it covers 
 - Ryzen 7950x CPU
     - 4.5GHz
     - 16 cores, 2 hyperthreads per core
-    - Supports 256-bit wide AVX2 vector instructions.
-- Apple M1 chip: Su
+    - Supports 256-bit wide AVX2 vector instructions
+- Apple M1 chip:
+    - 3.2GHz
     - 4 (performance) + 4 (efficiency) cores, no hyperthreading
 
 I update the MakeFile to reconfigure ISPC compiler on Apple machine:
 
 ```make
-ISPCFLAGS=-O3 --target=neon-i32x4 --arch=aarch64 --pic
+ISPCFLAGS=-O3 --target=neon-i32x8 --arch=aarch64 --pic
 ```
 
 ## Note
 All speedups are measured across 10 trials.
 
 ## Q4-1
-Build and run `sqrt`. Report the ISPC implementation speedup for 
+*Build and run `sqrt`. Report the ISPC implementation speedup for 
 single CPU core (no tasks) and when using all cores (with tasks). What 
 is the speedup due to SIMD parallelization? What is the speedup due to 
-multi-core parallelization?
+multi-core parallelization?*
 
-Speedups from serial, SIMD, and multi-core implementations on Ryzen 7950x:
+- Speedups from serial, SIMD, and multi-core (32 tasks) implementations
+on Ryzen 7950x:
 
-![Q4_1 speedup Ryzen](./Q4_1.png)
+    ![Q4_1 speedup Ryzen](./Q4_1_7950x.png)
 
-Speedups from serial, SIMD, and multi-core implementations on Apple machine:
+- Speedups from serial, SIMD, and multi-core (8 tasks) implementations
+on Apple machine:
+
+    ![Q4_1 speedup m1](./Q4_1_m1.png)
+
+The observed speedup from the ISPC SIMD implementation of `sqrt` for a single
+CPU core is less than the
+expected 8x on both machines. Similar to the observation made in
+program 3, this discrepancy is due to workload imbalance across the lanes of
+vectors. The approach in which the input array is initialized likely results in
+neighboring values with different distances from 1.0, i.e. the point where
+Newton's method converges fastest.
+
+```cpp
+    values[i] = .001f + 2.998f * static_cast<float>(rand()) / RAND_MAX;
+```
+
+Furthermore, the speedup from ISPC SIMD multi-core implementation of `sqrt` is
+also lower than the theoretical 32x on the Ryzen 7950x and 8x on the Apple machines.
+However, launching tasks on different cores do yield further speedup
+improvements.
 
 
 ## Q4-2
-Modify the contents of the array values to improve the relative speedup 
-of the ISPC implementations. Construct a specifc input that __maximizes speedup over the sequential version of the code__ and report the resulting speedup achieved (for both the with- and without-tasks ISPC implementations). Does your modification improve SIMD speedup?
-Does it improve multi-core speedup (i.e., the benefit of moving from ISPC without-tasks to ISPC with tasks)? Please explain why.
+*Modify the contents of the array values to improve the relative speedup 
+of the ISPC implementations. Construct a specifc input that
+__maximizes speedup over the sequential version of the code__ and report the
+resulting speedup achieved (for both the with- and without-tasks ISPC implementations). Does your modification improve SIMD speedup?
+Does it improve multi-core speedup (i.e., the benefit of moving from ISPC without-tasks to ISPC with tasks)? Please explain why.*
 
-Speedups from serial, SIMD, and multi-core implementations on Ryzen 7950x:
+To balance the workload across neighboring lanes in the vectors, one option
+is to assign every element of the input array the same value. However, the
+choice of value is crucial. 
+Within the range of 0 and 3, with 1.0 being the value
+where Newton's method converges the fastest, assigning 3.0 to all elements
+of the array results in the heaviest computation workload, whereas setting
+everything to 0 produces a slightly lower computation load. The heavier workload
+(using 3.0) benefits the multi-core implementation the most, as it can better
+amortize the overhead associated with creating threads.
 
-![Q4_2 speedup Ryzen](./Q4_2.png)
+Another approach to verify the impact of workload is to
+set every element to 1.0 in the input array. Since convergence is very fast at
+this value, the thread creation overhead becomes more significant, leading to
+a negative impact on the overall speedup for the multi-core implementation (
+see the snapshot below).
+
+- Speedups from serial, SIMD, and multi-core (32 tasks) implementations on
+Ryzen 7950x:
+
+    ![Q4_2 speedup Ryzen](./Q4_2_7950x.png)
+
+- Speedups from serial, SIMD, and multi-core (8 tasks) implementations on
+Apple M1 machine:
+
+    ![Q4_2 speedup m1](./Q4_2_m1.png)
+
+- Speedups from serial, SIMD, and multi-core (8 tasks) implementations on
+Apple M1 machine, with setting all elements to 1.0 in the input array:
+
+    ![Q4_2 speedup m1 allones](./Q4_2_m1_allones.png)
+
+__It is surprising to observe that on the Apple M1 machine__, the multi-core (8 tasks)
+implementation shows no speedup improvement when all elements are set to 3.0.
+In fact, the performance even degrades compared to using an input array with 
+randomly initialized values.
 
 ## Q4-3
-Construct a specific input for `sqrt` that __minimizes speedup for ISPC
+*Construct a specific input for `sqrt` that __minimizes speedup for ISPC
 (without-tasks) over the sequential version of the code__. Describe this input,
 describe why you chose it, and report the resulting relative performance of
 the ISPC implementations. What is the reason for the loss in efficiency? 
 __(keep in mind we are using the `--target=avx2` option for ISPC,
-which generates 8-wide SIMD instructions)__. 
+which generates 8-wide SIMD instructions)__.*
 
-Speedups from serial, SIMD, and multi-core implementations on Ryzen 7950x:
+To observe the worst speedup performance with the SIMD single core
+implementation, a straightforward approach is to initialize the input array
+such that one lane in each vector holds a value of 3.0 (heaviest workload)
+while all other lanes are set to 1.0 (lightest workload).
+This initialization defeats the benefits of the
+SIMD implementation entirely, as it introduces extreme workload imbalance
+across the lanes.
 
-![Q4_3 speedup Ryzen](./Q4_3.png)
+- Speedups from serial, SIMD, and multi-core (32 tasks) implementations
+on Ryzen 7950x:
+
+    ![Q4_3 speedup Ryzen](./Q4_3_7950x.png)
+
+- Speedups from serial, SIMD, and multi-core (8 tasks) implementations
+on Apple M1 machine:
+
+    ![Q4_3 speedup m1](./Q4_3_m1.png)
 
 
 ## Q4-4
