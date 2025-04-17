@@ -22,6 +22,7 @@ Apple M1 chip.__
 - [program 3](./prog3_mandelbrot_ispc/README.md)
 - [program 4](./prog4_sqrt/README.md)
 - [program 5](./prog5_saxpy/README.md)
+- [program 6](./prog6_kmeans/README.md)
 
 
 ## What About ARM-Based Macs? ##
