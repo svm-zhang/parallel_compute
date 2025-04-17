@@ -90,6 +90,66 @@ void computeAssignments(WorkerArgs *const args) {
   free(minDist);
 }
 
+void computeAssignmentsThread(WorkerArgs *const args) {
+  for (int m = 0; m < args->M; m++) {
+    double d = dist(&args->data[m * args->N],
+                    &args->clusterCentroids[args->threadID * args->N], args->N);
+    args->distance[m] = d;
+  }
+}
+
+void assignmentWorkerStart(
+    int M, int N, int K,
+    double *data, double *clusterCentroids,
+    int *clusterAssignments) {
+    std::thread workers[K];
+    WorkerArgs assignmentArgs[K];
+
+    // initialize distance array for each thread
+    // each array is of size M
+    double **distance = new double*[K];
+    for (int k = 0; k<K; k++) {
+      distance[k] = new double[M];
+    }
+
+    for (int i = 0; i<K; i++) {
+      assignmentArgs[i].data = data;
+      assignmentArgs[i].clusterCentroids = clusterCentroids;
+      assignmentArgs[i].distance = distance[i];
+      assignmentArgs[i].M = M;
+      assignmentArgs[i].N = N;
+      assignmentArgs[i].K = K;
+      assignmentArgs[i].threadID = i;
+    }
+    // spawn worker threads == K - 1 
+    for (int i = 1; i<K; i++) {
+      workers[i] = std::thread(computeAssignmentsThread, &assignmentArgs[i]);
+    }
+    // Do not forgot to call assignment from main thread
+    computeAssignmentsThread(&assignmentArgs[0]);
+    // wait for all threads to finish
+    for (int i=1; i<K; i++) {
+        workers[i].join();
+    }
+    // figure out assignment by comparing distance
+    // for each point in M, there are 3 distance values, each is distance to
+    // a cluster k
+    double *minDist = new double[M];
+    for (int m =0; m < M; m++) {
+      minDist[m] = assignmentArgs[0].distance[m];
+      clusterAssignments[m] = 0;
+    }
+    for (int k = 1; k<K; k++) {
+      for (int m = 0; m<M; m++) {
+        if (assignmentArgs[k].distance[m] < minDist[m]) {
+          minDist[m] = assignmentArgs[k].distance[m];
+          clusterAssignments[m] = k;
+        }
+      }
+    }
+    free(distance);
+    free(minDist);
+}
 
 /**
  * Given the cluster assignments, computes the new centroid locations for
@@ -211,7 +271,8 @@ void kMeansThread(double *data, double *clusterCentroids, int *clusterAssignment
     args.end = K;
 
     // this is the original serial version
-    computeAssignments(&args);
+    // computeAssignments(&args);
+    assignmentWorkerStart(M, N, K, data, clusterCentroids, args.clusterAssignments);
     computeCentroids(&args);
     computeCost(&args);
 
