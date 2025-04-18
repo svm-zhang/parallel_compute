@@ -88,6 +88,28 @@ points to a single cluster centroid and then consolidating, we could
 reconstruct the parallelism to have each thread handle a subset of datapoint
 and compute distances to all cluster centroids. With this approach, I can modify
 the original `computeAssignments` function to handle a batch of data points.
+
+Specifically, the `computeAssignmentsDataThread` function in `kmeansThread.cpp`
+takes a
+subset of data points and computes the distance of each point to all cluster
+centroids. The `assignmentImprovedWorkerStart` function divides the M data
+points into multiple batches. The number of batches is determined
+based on the number of threads used (currently hard-coded to 8). This
+implementation achieves a speedup of 3.93x on Apple M1 machine, and I believe
+its performance could
+be further improved using additional multi-core techniques.
+
+![kmeans data threaded m1](./kmeans_data_thread_m1.png)
+
+During the implementation of the `computeAssignmentsDataThread` function, I
+also realized that simply swapping the inner loop (over the M dimension) with the
+outer loop (over the K dimension), we can achieve two benefits:
+    - Avoid allocating the `minDist` array of size M.
+    - Achieve a minor speedup, since `M >> K` (approximately 0.12x improvement).
+
+Please refer to the `computeAssignmentImprovedOriginal` function in `kmeansThread.cpp`.
+
+![kmeans swapping loop order m1](./kmeans_swap_loop_order_m1.png)
   
 ## Constraints
 
