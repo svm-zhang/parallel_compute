@@ -26,6 +26,7 @@ Apple M1 chip:
 
 Ryzen 7950x:
 
+![performance on 7950x](./Q5_1_7950x.png)
 
 The `saxpy` program is bounded by memory bandwidth, peforming two floating-point
 operations for every 3 data accesses (2 loads and 1 write). This corresponds to an arithmetic
