@@ -135,9 +135,32 @@ across the lanes.
 
 
 ## Q4-4
-_Extra Credit: (up to 2 points)_ Write your own version of the `sqrt` 
+Write your own version of the `sqrt` 
 function manually using AVX2 intrinsics. To get credit your 
 implementation should be nearly as fast (or faster) than the binary 
 produced using ISPC. You may find the [Intel Intrinsics Guide](https://software.intel.com/sites/landingpage/IntrinsicsGuide/) 
 very helpful.
 
+Function `sqrtVector` in `sqrtVector.cpp` is the vectorized implementation
+of `sqrt` using AVX2 intrinsics. The speedup on Ryzen 7950x (~4.9x) is
+illustrated in the following image.
+
+![sqrt vector 7950x](./Q4_4_7950x.png)
+
+By default, `sqrtVector` is not enabled. Below lists steps to turn it on:
+- Uncomment `line 31` in the `MakeFile` to add `sqrtVector.o` to the
+    compile object list:
+
+    ```MakeFile
+    OBJS=$(OBJDIR)/main.o $(OBJDIR)/sqrtSerial.o $(OBJDIR)/sqrtVector.o $(OBJDIR)/sqrt_ispc.o $(PPM_OBJ) $(TASKSYS_OBJ)
+    ```
+
+- Uncomment `line 13` in `main.cpp` to import `sqrtVector` function:
+
+    ```cpp
+    extern void sqrtVector(int N, float startGuess, float* values, float* output);
+    ```
+- Uncomment `line 105-118` to call `sqrtVector` function and report speedup.
+
+Lastly, _it is important to note_ that the current implementation does not take
+care of the case where N % 8 != 0 (N is the number of elements).
