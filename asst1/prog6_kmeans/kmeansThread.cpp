@@ -90,6 +90,87 @@ void computeAssignments(WorkerArgs *const args) {
   free(minDist);
 }
 
+void computeAssignmentsImproveOriginal(WorkerArgs *const args) {
+  // Swap the inner loop to outer
+  // M >> K
+  // Avoid initialize minDist per thread
+  for (int m = 0; m < args->M; m++) {
+    double minDist = 1e30;
+    int assignment = -1;
+    for (int k = args->start; k < args->end; k++) {
+      double d = dist(&args->data[m * args->N],
+                      &args->clusterCentroids[k * args->N], args->N);
+      if (d < minDist) {
+        minDist = d;
+        assignment = k;
+      }
+    }
+    args->clusterAssignments[m] = assignment;
+  }
+}
+
+void computeAssignmentsDataThread(WorkerArgs *const args) {
+  // Swap the inner loop to outer
+  // M >> K
+  // Avoid initialize minDist per thread
+  for (int m = args->start; m < args->end; m++) {
+    double minDist = 1e30;
+    int assignment = -1;
+    for (int k = 0; k < args->K; k++) {
+      double d = dist(&args->data[m * args->N],
+                      &args->clusterCentroids[k * args->N], args->N);
+      if (d < minDist) {
+        minDist = d;
+        assignment = k;
+      }
+    }
+    args->clusterAssignments[m] = assignment;
+  }
+}
+
+void assignmentImprovedWorkerStart(
+    int M, int N, int K,
+    WorkerArgs *const args
+){
+
+    // manually set to 8 for now.
+    int num_threads = 8;
+    std::thread workers[num_threads];
+    WorkerArgs assignmentArgs[num_threads];
+
+    int dataPerThread = args->M / num_threads;
+
+    for (int i = 0; i<num_threads; i++) {
+      assignmentArgs[i].data = args->data;
+      assignmentArgs[i].clusterCentroids = args->clusterCentroids;
+      assignmentArgs[i].clusterAssignments = args->clusterAssignments;
+      assignmentArgs[i].N = args->M;
+      assignmentArgs[i].N = args->N;
+      assignmentArgs[i].K = args->K;
+      assignmentArgs[i].threadID = i;
+
+      int workStart = i * dataPerThread;
+      int workEnd = i * dataPerThread + dataPerThread;
+      assignmentArgs[i].start = workStart;
+      if (workEnd > M) {
+        // where M % 8 != 0 and this is the last batch of data
+        assignmentArgs[i].end = M - workStart;
+      } else {
+        assignmentArgs[i].end = workEnd;
+      }
+    }
+    // spawn worker threads == K - 1 
+    for (int i = 1; i<K; i++) {
+      workers[i] = std::thread(computeAssignmentsDataThread, &assignmentArgs[i]);
+    }
+    // Do not forgot to call assignment from main thread
+    computeAssignmentsDataThread(&assignmentArgs[0]);
+    // wait for all threads to finish
+    for (int i=1; i<K; i++) {
+        workers[i].join();
+    }
+}
+
 void computeAssignmentsThread(WorkerArgs *const args) {
   for (int m = 0; m < args->M; m++) {
     double d = dist(&args->data[m * args->N],
@@ -271,8 +352,13 @@ void kMeansThread(double *data, double *clusterCentroids, int *clusterAssignment
     args.end = K;
 
     // this is the original serial version
-    // computeAssignments(&args);
-    assignmentWorkerStart(M, N, K, data, clusterCentroids, args.clusterAssignments);
+    computeAssignments(&args);
+    // this is original impl with loop order swapped
+    // computeAssignmentsImproveOriginal(&args);
+    // this is threading over K
+    // assignmentWorkerStart(M, N, K, data, clusterCentroids, args.clusterAssignments);
+    // this is threading over M
+    // assignmentImprovedWorkerStart(M, N, K, &args);
     computeCentroids(&args);
     computeCost(&args);
 
