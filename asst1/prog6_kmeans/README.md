@@ -25,6 +25,13 @@ measurements.  Based on these measurements, you should focus in on the part of
 the code that is taking a significant portion of the runtime, and then
 understand it more carefully to determine if there is a way to speed it up.
 
+## Note
+
+- __All runtime measurements reported in this document are from a single run, not
+averaged over multiple runs__.
+
+- To toggle between different implementations of computeAssignments, simply
+uncomment one of the lines from `line 357-361`.
 
 ## Q6-1
 Once you have the data, compile and run `kmeans` (it may take longer than usual
@@ -33,7 +40,13 @@ the total runtime of the algorithm on the data.
 
 Obtaining the `data.dat` by uncommenting `line 97 to 128` in `main.cpp`.
 
+- Apple M1 machine:
+
 ![kmeans m1](./kmeans_m1.png)
+
+- Ryzen 7950x
+
+![kmeans 7950x](./kmeans_7950x.png)
 
 ## Q6-2
 
@@ -77,10 +90,16 @@ things I tried ... resulting in a speedup/slowdown of ...".
 
 Computing distance between input point `m` and a centroid from cluster `k` can
 be done in parallel. Please check the `assignmentWorkerStart` function in
-`kmeansThread.cpp`. An improvement of approximate 2x is observed on Apple M1
-chip.
+`kmeansThread.cpp`. An improvement of approximate 2x is observed on both Apple
+M1 and Ryzen 7950x chips.
+
+- Apple M1 machine:
 
 ![kmeans thread m1](./kmeans_thread_m1.png)
+
+- Ryzen 7950x
+
+![kmeans thread 7950x](./kmeans_thread_7950x.png)
 
 However, the aggregating step where I compare all distances is still the
 bottleneck. Instead of having each thread calculate distances for all M data
@@ -99,17 +118,30 @@ implementation achieves a speedup of 3.93x on Apple M1 machine, and I believe
 its performance could
 be further improved using additional multi-core techniques.
 
+- Apple M1 machine:
+
 ![kmeans data threaded m1](./kmeans_data_thread_m1.png)
+
+- Ryzen 7950x:
+
+![kmeans data threaded 7950x](./kmeans_data_thread_7950x.png)
 
 During the implementation of the `computeAssignmentsDataThread` function, I
 also realized that simply swapping the inner loop (over the M dimension) with the
 outer loop (over the K dimension), we can achieve two benefits:
     - Avoid allocating the `minDist` array of size M.
-    - Achieve a minor speedup, since `M >> K` (approximately 0.12x improvement).
+    - Achieve a minor speedup, since `M >> K` (approximately ~1.184x and
+    ~1.196x improvement on Apple M1 machine and Ryzen 7950x chip, respectively).
 
 Please refer to the `computeAssignmentImprovedOriginal` function in `kmeansThread.cpp`.
 
+- Apple M1 machine:
+
 ![kmeans swapping loop order m1](./kmeans_swap_loop_order_m1.png)
+
+- Ryzen 7950x:
+
+![kmeans swapping loop order 7950x](./kmeans_swap_loop_order_7950x.png)
   
 ## Constraints
 
