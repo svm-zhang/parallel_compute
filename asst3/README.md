@@ -33,6 +33,17 @@ For C++ questions (like what does the _virtual_ keyword mean), the
 things in a way that's detailed yet easy to understand (unlike a lot of C++
 resources), and was co-written by Bjarne Stroustrup, the creator of C++!
 
+## Hardward
+
+- Nvidia GeForce RTX 4090
+    - Cores: 16384
+    - Memory:
+        - Type: GDDR6x
+        - Size: 24GB
+        - Bus: 384 bit (48 byte)
+        - Bandwidth: 1.01 TB/s
+    - Graphic card interface: PCIe 4.0 x16
+
 
 ## Write-up
 
