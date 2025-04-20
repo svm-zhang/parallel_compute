@@ -62,9 +62,11 @@ final timer (after your call to `cudaMemcopy()` that returns data to the CPU)
 because `cudaMemcpy()` will not return to the calling thread until after the
 copy is complete.
 
-**Question 1.** What performance do you observe compared to the sequential
+## Q1
+
+*What performance do you observe compared to the sequential
 CPU-based implementation of SAXPY (recall your results from saxpy on Program 5
-from Assignment 1)?
+from Assignment 1)?*
 
 Compared to the sequential CPU-based implementation (
 [see Q5-1 section from assignemnt 1](../../asst1/prog5_saxpy/README.md)), the
@@ -80,7 +82,9 @@ copied from host to device. However, on the way out from device to host, the
 total number of bytes transferred in `N * sizeof(float)` (see below where
 a factor of `4` is used).
 
-**Question 2.** Compare and explain the difference between the results
+## Q2
+
+*Compare and explain the difference between the results
 provided by two sets of timers (timing only the kernel execution vs. timing the
 entire process of moving data to the GPU and back in addition to the kernel
 execution). Are the bandwidth values observed _roughly_ consistent with the
@@ -93,7 +97,7 @@ Several factors prevent peak bandwidth, including CPU motherboard chipset
 performance and whether or not the host CPU memory used as the source of the
 transfer is “pinned” — the latter allows the GPU to directly access memory
 without going through virtual memory address translation. If you are
-interested, you can find more info here: <https://kth.instructure.com/courses/12406/pages/optimizing-host-device-data-communication-i-pinned-host-memory>)
+interested, you can find more info here: <https://kth.instructure.com/courses/12406/pages/optimizing-host-device-data-communication-i-pinned-host-memory>).*
 
 From the image above, only  0.76% of the total execution time is spent on
 kernel execution.
