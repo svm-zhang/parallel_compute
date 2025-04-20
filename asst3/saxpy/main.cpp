@@ -11,6 +11,7 @@ void usage(const char* progname) {
     printf("Usage: %s [options]\n", progname);
     printf("Program Options:\n");
     printf("  -n  --arraysize <INT>  Number of elements in arrays\n");
+    printf("  -t  --trial <INT>  Number of trials\n");
     printf("  -?  --help             This message\n");
 }
 
@@ -20,20 +21,25 @@ int main(int argc, char** argv)
 
     // default: arrays of 100M numbers
     int N = 100 * 1000 * 1000;
+    int trial = 3;
 
     // parse commandline options ////////////////////////////////////////////
     int opt;
     static struct option long_options[] = {
         {"arraysize",  1, 0, 'n'},
+        {"trial",  1, 0, 't'},
         {"help",       0, 0, '?'},
         {0 ,0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "?n:", long_options, NULL)) != EOF) {
+    while ((opt = getopt_long(argc, argv, "?nt:", long_options, NULL)) != EOF) {
 
         switch (opt) {
         case 'n':
             N = atoi(optarg);
+            break;
+        case 't':
+            trial = atoi(optarg);
             break;
         case '?':
         default:
@@ -56,7 +62,7 @@ int main(int argc, char** argv)
     printCudaInfo();
     
     printf("Running 3 timing tests:\n");
-    for (int i=0; i<3; i++) {
+    for (int i=0; i<trial; i++) {
       saxpyCuda(N, alpha, xarray, yarray, resultarray);
     }
 
