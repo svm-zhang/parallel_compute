@@ -54,7 +54,43 @@ void exclusive_scan(int* input, int N, int* result)
     // to CUDA kernel functions (that you must write) to implement the
     // scan.
 
+    for (int d = 1; d < N/2; d *= 2) {
+      // one thread allocated per iteration
+      // inner loop has N / 2*d iterations per iteration of outer loop
+      int threadsPerBlock = N / (2 * d);
+      int blocks = 1;
 
+      upsweep_kernel<<blocks, threadsPerBlock>>(N, d, result);
+      // need to wait for all threads finished before moving to the next depth
+      cudaDeviceSynchronize();
+    }
+
+    for (int d = N/2, d >= 1; d /= 2 ) {
+      int threadsPerBlock = N / (2 * d);
+      int blocks = 1;
+
+      downsweep_kernel<<blocks, threadsPerBlock>>(N, d, result);
+      cudaDeviceSynchronize();
+    }
+}
+
+__global__ void
+upsweep_kernel(int N, int d, int *result) {
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  index = index * 2 * d;
+
+  result[index+2*d-1] = result[index+d-1] + result[index+2*d-1];
+  if (4*d == N) result[index+2*d-1] = 0;
+}
+
+__global__ void
+downsweep_kernel(int N, int d, int *result) {
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  index = index * 2 * d;
+
+  int tmp = result[index+d-1];
+  int result[index+d-1] = result[index+2*d-1];
+  int result[index+2*d-1] = tmp + result[index+2*d-1];
 }
 
 
