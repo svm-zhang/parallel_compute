@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 
-import subprocess
-import os
-import re
-import sys
 import json
+import os
 import platform
+import re
+import subprocess
+import sys
 
-element_counts = ["1000000", "10000000", "20000000", "40000000"]
+# element_counts = ["1_000_000", "10_000_000", "20_000_000", "40_000_000"]
+element_counts = [
+    "128",
+    "262144",
+    "1048576",
+    "8388608",
+    "16777216",
+    "33554432",
+    "67108864",
+]
 
 perf_points = 1.25
 
@@ -36,7 +45,9 @@ print("--------------")
 def check_correctness(test, element_count):
     correctness_cmd = f"./cudaScan -m {test} -i random -n {element_count} > ./logs/test/{test}_correctness_{element_count}.log"
     if os.environ.get("GRADING_TOKEN"):
-        result = subprocess.run(correctness_cmd, shell=True, user="nobody", env={})
+        result = subprocess.run(
+            correctness_cmd, shell=True, user="nobody", env={}
+        )
     else:
         result = subprocess.run(correctness_cmd, shell=True)
     return result.returncode == 0
@@ -49,7 +60,8 @@ def get_time(command):
         )
     else:
         result = subprocess.run(command, shell=True, capture_output=True)
-    time_match = re.search(r"\d+(\.\d+)?", result.stdout.decode())
+        output = result.stdout.decode()
+    time_match = re.search(r"\d+(\.\d+)?", output)
     return float(time_match.group()) if time_match else None
 
 
@@ -74,7 +86,9 @@ def run_tests():
         print(f"Student Time: {your_times[element_count]}")
 
         ref_binary = (
-            "cudaScan_ref_x86" if platform.machine() == "x86_64" else "cudaScan_ref"
+            "cudaScan_ref_x86"
+            if platform.machine() == "x86_64"
+            else "cudaScan_ref"
         )
 
         # Get reference time
@@ -141,22 +155,22 @@ def print_score_table(scores, total_score, max_total_score):
         if not score["correct"]:
             stu_time = f"{stu_time} (F)"
 
-        print(
-            "| %-15s | %-15s | %-15s | %-15s |"
-            % (element_count, ref_time, stu_time, score_value)
-        )
+        output_line = f"| {element_count:<15} | {ref_time:<15} | {stu_time:<15} | {score_value:<15.4f} |"
+        print(f"{output_line}")
 
     print(dashes)
     print(
         "| %-33s | %-15s | %-15s |"
-        % ("", "Total score:", f"{total_score}/{max_total_score}")
+        % ("", "Total score:", f"{total_score:<.4f}/{max_total_score}")
     )
     print(dashes)
 
 
 # Run tests and calculate scores
 correct, your_times, fast_times = run_tests()
-scores, total_score, max_total_score = calculate_scores(correct, your_times, fast_times)
+scores, total_score, max_total_score = calculate_scores(
+    correct, your_times, fast_times
+)
 
 # Output based on mode
 GRADING_TOKEN = os.environ.get("GRADING_TOKEN")
