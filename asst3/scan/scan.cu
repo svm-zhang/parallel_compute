@@ -27,6 +27,29 @@ static inline int nextPow2(int n) {
     return n;
 }
 
+__global__ void
+upsweep_kernel(int N, int d, int *result) {
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  int offset = 2 * d;
+  int idx = index * offset;
+  if (idx + offset - 1 < N) {
+    result[idx+offset-1] += result[idx+d-1];
+  }
+}
+
+__global__ void
+downsweep_kernel(int N, int d, int *result) {
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  int offset = 2 * d;
+  int idx = index * offset;
+  if (idx + offset - 1 < N) {
+    int tmp = result[idx+d-1];
+    result[idx+d-1] = result[idx+offset-1];
+    result[idx+offset-1] += tmp;
+  }
+}
+
+
 // exclusive_scan --
 //
 // Implementation of an exclusive scan on global memory array `input`,
@@ -44,55 +67,33 @@ static inline int nextPow2(int n) {
 // places it in result
 void exclusive_scan(int* input, int N, int* result)
 {
-
-    // CS149 TODO:
-    //
-    // Implement your exclusive scan implementation here.  Keep in
-    // mind that although the arguments to this function are device
-    // allocated arrays, this is a function that is running in a thread
-    // on the CPU.  Your implementation will need to make multiple calls
-    // to CUDA kernel functions (that you must write) to implement the
-    // scan.
-
     for (int d = 1; d < N/2; d *= 2) {
       // one thread allocated per iteration
       // inner loop has N / 2*d iterations per iteration of outer loop
-      int threadsPerBlock = N / (2 * d);
-      int blocks = 1;
+      int iters = N / (2*d);
+      // limit the number of threads to launch when THREADS_PER_BLOCK > iters
+      int threadsPerBlock = std::min(iters, THREADS_PER_BLOCK);
+      int blocks = (iters + threadsPerBlock - 1) / threadsPerBlock;
 
-      upsweep_kernel<<blocks, threadsPerBlock>>(N, d, result);
+      upsweep_kernel<<<blocks, threadsPerBlock>>>(N, d, result);
       // need to wait for all threads finished before moving to the next depth
       cudaDeviceSynchronize();
     }
 
-    for (int d = N/2, d >= 1; d /= 2 ) {
-      int threadsPerBlock = N / (2 * d);
-      int blocks = 1;
+    // set the last element to be zero
+    int zero = 0;
+    cudaMemcpy(&result[N-1], &zero, sizeof(int), cudaMemcpyHostToDevice);
 
-      downsweep_kernel<<blocks, threadsPerBlock>>(N, d, result);
+    for (int d = N/2; d >= 1; d /= 2 ) {
+      int iters = N / (2*d);
+      int threadsPerBlock = std::min(iters, THREADS_PER_BLOCK);
+      int blocks = (iters + threadsPerBlock - 1) / threadsPerBlock;
+      printf("iters=%d\ttpb=%d\tblocks=%d\n", iters, threadsPerBlock, blocks);
+
+      downsweep_kernel<<<blocks, threadsPerBlock>>>(N, d, result);
       cudaDeviceSynchronize();
     }
 }
-
-__global__ void
-upsweep_kernel(int N, int d, int *result) {
-  int index = blockIdx.x * blockDim.x + threadIdx.x;
-  index = index * 2 * d;
-
-  result[index+2*d-1] = result[index+d-1] + result[index+2*d-1];
-  if (4*d == N) result[index+2*d-1] = 0;
-}
-
-__global__ void
-downsweep_kernel(int N, int d, int *result) {
-  int index = blockIdx.x * blockDim.x + threadIdx.x;
-  index = index * 2 * d;
-
-  int tmp = result[index+d-1];
-  int result[index+d-1] = result[index+2*d-1];
-  int result[index+2*d-1] = tmp + result[index+2*d-1];
-}
-
 
 //
 // cudaScan --
