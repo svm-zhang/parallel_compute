@@ -8,7 +8,7 @@ of all indices `i` for which `A[i] == A[i+1]`.
 For example, given the array `{1,2,2,1,1,1,3,5,3,3}`, your program should
 output the array `{1,3,4,8}`.
 
-#### Exclusive Prefix Sum
+### Exclusive Prefix Sum
 
 We want you to implement `find_repeats` by first implementing parallel exclusive
 prefix-sum operation.
@@ -77,7 +77,20 @@ Program Options:
   -?  --help             This message
 ```
 
-#### Implementing "Find Repeats" Using Prefix Sum
+#### CUDA implementation and score table
+
+As of [commit f2ac945](https://github.com/svm-zhang/parallel_compute/commit/f2ac945c42e8ca7a0b302d5ef90d08b554551430),
+the performance of CUDA implementation for `exclusive_scan` is demonstrated in
+the image below. The runtime scales well with larger input arrays; however, 
+for smaller N values, it performs worse compared to the reference
+implementation. I am currently investigating the reasons behind this behavior.
+
+__Note__ that the current implementation only works for N
+values that are powers of 2.
+
+![cudaScan 4090](./cudascan_4090.png)
+
+### Implementing "Find Repeats" Using Prefix Sum
 
 Once you have written `exclusive_scan`, implement the function `find_repeats`
 in `scan/scan.cu`. This will involve writing more device code, in addition to
