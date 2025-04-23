@@ -88,7 +88,7 @@ void exclusive_scan(int* input, int N, int* result)
       int iters = N / (2*d);
       int threadsPerBlock = std::min(iters, THREADS_PER_BLOCK);
       int blocks = (iters + threadsPerBlock - 1) / threadsPerBlock;
-      printf("iters=%d\ttpb=%d\tblocks=%d\n", iters, threadsPerBlock, blocks);
+      // printf("iters=%d\ttpb=%d\tblocks=%d\n", iters, threadsPerBlock, blocks);
 
       downsweep_kernel<<<blocks, threadsPerBlock>>>(N, d, result);
       cudaDeviceSynchronize();
@@ -178,6 +178,30 @@ double cudaScanThrust(int* inarray, int* end, int* resultarray) {
 }
 
 
+__global__ void
+compare_adjacent(int length, int *input, int *mask) {
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  mask[index] = 0;
+  // compare current with the next
+  if (index < length - 1 && input[index] == input[index+1]) {
+      mask[index] = 1;
+  }
+}
+
+
+__global__ void
+scatter(int length, int *mask, int *scan, int *result) {
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  // mask[i] = 1 then scan[i] = s the result[s] = i
+  result[index] = 0;
+  if (index < length - 1) {
+    if (mask[index] == 1) {
+      result[scan[index]] = index;
+    }
+  }
+}
+
 // find_repeats --
 //
 // Given an array of integers `device_input`, returns an array of all
@@ -198,7 +222,41 @@ int find_repeats(int* device_input, int length, int* device_output) {
     // must ensure that the results of find_repeats are correct given
     // the actual array length.
 
-    return 0; 
+    int count = 0;
+
+    // get a mask array where mask[i] = 1 if input[i] == input[i+1] 
+    int *device_mask = nullptr;
+    cudaMalloc((void **)&device_mask, length * sizeof(int));
+    // no need to launch so many threads
+    int threadsPerBlock = std::min(length, THREADS_PER_BLOCK);
+    int blocks = (length + threadsPerBlock - 1) / threadsPerBlock;
+    compare_adjacent<<<blocks, threadsPerBlock>>>(length, device_input, device_mask);
+
+    int *device_scan = nullptr;
+    cudaMalloc((void **)&device_scan, length * sizeof(int));
+    cudaMemcpy(device_scan, device_mask, length*sizeof(int), cudaMemcpyDeviceToDevice);
+    exclusive_scan(device_mask, length, device_scan);
+
+    // the last element of exclusive_scan tells you the number of repeats
+    cudaMemcpy(&count, &device_scan[length-1], sizeof(int), cudaMemcpyDeviceToHost);
+
+    scatter<<<blocks, threadsPerBlock>>>(length, device_mask, device_scan, device_output);
+
+    /* Debug purpose
+    int* input = new int[length];
+    cudaMemcpy(input, device_input, length*sizeof(int), cudaMemcpyDeviceToHost);
+    int* mask_result = new int[length];
+    cudaMemcpy(mask_result, device_mask, length*sizeof(int), cudaMemcpyDeviceToHost);
+    int* scan_result = new int[length];
+    cudaMemcpy(scan_result, device_scan, length*sizeof(int), cudaMemcpyDeviceToHost);
+    int* scatter_result = new int[length];
+    cudaMemcpy(scatter_result, device_output, length*sizeof(int), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < length; i++) {
+      printf("input[i]=%d\tmask[i]=%d\tscan[i]=%d\tscatter[i]=%d\n", input[i], mask_result[i], scan_result[i], scatter_result[i]);
+    }
+    */
+
+    return count; 
 }
 
 
