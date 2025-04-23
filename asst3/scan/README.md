@@ -102,6 +102,18 @@ When calling your `exclusive_scan` implementation, remember that the contents
 of the `start` array are copied over to the `output` array. Also, the arrays
 passed to `exclusive_scan` are assumed to be in `device` memory.
 
+#### CUDA implementation and score table
+
+The performance of CUDA implementation for `find_repeats` is demonstrated in
+the image below. The runtime does not scale well with smaller input arrays, as
+observed similarly in the `exclusive_scan` implementation. 
+
+__Note__ that the current implementation only works for input arrays whose
+lengths are powers of 2.
+
+![find_repeats 4090](./findrepeats_4090.png)
+
+## Score table instruction
 For reference, a scan score table is provided below, showing the performance
 of a simple CUDA implementation on a K80 GPU. To check the correctness and
 performance score of your `scan` and `find_repeats` implementation,
@@ -126,6 +138,8 @@ Scan Score Table:
 -------------------------------------------------------------------------
 ```
 
+## Tips
+
 This part of the assignment is largely about getting more practice with
 writing CUDA and thinking in a data parallel manner, and not about performance
 tuning code. Getting full performance points on this part of the assignment
@@ -145,6 +159,8 @@ the program is run, in order to aid in debugging. You can pass the argument
 will do this when grading. We encourage you to come up with alternate inputs
 to your program to help you evaluate it.
 You can also use the `-n <size>` option to change the length of the input array.
+
+## Try harder
 
 The argument `--thrust` will use the [Thrust Library's](http://thrust.github.io/)
 implementation of [exclusive scan](https://docs.nvidia.com/cuda/archive/12.2.2/thrust/index.html?highlight=group%20prefix%20sums#prefix-sums).
